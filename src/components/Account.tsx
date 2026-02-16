@@ -7,7 +7,11 @@ import { RoleSelector } from './RoleSelector';
 import { useUserRole } from '../contexts/UserRoleContext';
 import { User, Shield, Wallet, CreditCard, Bell, HelpCircle, LogOut, ChevronRight, CheckCircle, UserCircle } from 'lucide-react';
 
-export function Account() {
+interface AccountProps {
+  onFeatureOpen: (feature: string) => void;
+}
+
+export function Account({ onFeatureOpen }: AccountProps) {
   const { role, roleConfig } = useUserRole();
   const [showRoleSelector, setShowRoleSelector] = useState(false);
 
@@ -34,7 +38,6 @@ export function Account() {
 
   return (
     <div className="px-4 py-6 space-y-6">
-      {/* Header */}
       <div className="text-center">
         <div className="w-20 h-20 bg-[#008753] rounded-full flex items-center justify-center mx-auto mb-3">
           <User size={40} className="text-white" />
@@ -60,7 +63,6 @@ export function Account() {
         </Badge>
       </div>
 
-      {/* Account Type Card */}
       <Card className="border-gray-200">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
@@ -82,7 +84,6 @@ export function Account() {
         </CardContent>
       </Card>
 
-      {/* Account Balance Card - Only for trading accounts */}
       {roleConfig.canTrade && (
         <Card className="bg-gradient-to-br from-gray-900 to-gray-700 text-white border-0">
           <CardContent className="p-4">
@@ -96,10 +97,17 @@ export function Account() {
             </div>
             <p className="text-3xl mb-4">₦{userProfile.accountBalance.toLocaleString()}</p>
             <div className="flex gap-2">
-              <Button className="flex-1 bg-white text-gray-900 hover:bg-gray-100">
+              <Button 
+                onClick={() => onFeatureOpen('add-funds')}
+                className="flex-1 bg-white text-gray-900 hover:bg-gray-100"
+              >
                 Add Funds
               </Button>
-              <Button variant="outline" className="flex-1 border-white text-white hover:bg-white/10">
+              <Button 
+                onClick={() => onFeatureOpen('withdraw')}
+                variant="outline" 
+                className="flex-1 border-white text-white hover:bg-white/10"
+              >
                 Withdraw
               </Button>
             </div>
@@ -107,7 +115,6 @@ export function Account() {
         </Card>
       )}
 
-      {/* Profile Information */}
       {accountSections.map((section, idx) => (
         <div key={idx} className="space-y-3">
           <h3 className="text-gray-900 flex items-center gap-2">
@@ -132,7 +139,6 @@ export function Account() {
         </div>
       ))}
 
-      {/* Security & Settings */}
       <div className="space-y-3">
         <h3 className="text-gray-900 flex items-center gap-2">
           <Shield size={20} className="text-gray-600" />
@@ -140,28 +146,40 @@ export function Account() {
         </h3>
         <Card className="border-gray-200">
           <CardContent className="p-0">
-            <button className="w-full p-4 flex items-center justify-between border-b border-gray-100 hover:bg-gray-50 transition-colors">
+            <button 
+              onClick={() => onFeatureOpen('payment-methods')}
+              className="w-full p-4 flex items-center justify-between border-b border-gray-100 hover:bg-gray-50 transition-colors"
+            >
               <div className="flex items-center gap-3">
                 <CreditCard size={20} className="text-gray-600" />
                 <span className="text-gray-900 text-sm">Payment Methods</span>
               </div>
               <ChevronRight size={20} className="text-gray-400" />
             </button>
-            <button className="w-full p-4 flex items-center justify-between border-b border-gray-100 hover:bg-gray-50 transition-colors">
+            <button 
+              onClick={() => onFeatureOpen('notifications')}
+              className="w-full p-4 flex items-center justify-between border-b border-gray-100 hover:bg-gray-50 transition-colors"
+            >
               <div className="flex items-center gap-3">
                 <Bell size={20} className="text-gray-600" />
                 <span className="text-gray-900 text-sm">Notifications</span>
               </div>
               <ChevronRight size={20} className="text-gray-400" />
             </button>
-            <button className="w-full p-4 flex items-center justify-between border-b border-gray-100 hover:bg-gray-50 transition-colors">
+            <button 
+              onClick={() => onFeatureOpen('security-settings')}
+              className="w-full p-4 flex items-center justify-between border-b border-gray-100 hover:bg-gray-50 transition-colors"
+            >
               <div className="flex items-center gap-3">
                 <Shield size={20} className="text-gray-600" />
                 <span className="text-gray-900 text-sm">Security Settings</span>
               </div>
               <ChevronRight size={20} className="text-gray-400" />
             </button>
-            <button className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+            <button 
+              onClick={() => onFeatureOpen('help-support')}
+              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
               <div className="flex items-center gap-3">
                 <HelpCircle size={20} className="text-gray-600" />
                 <span className="text-gray-900 text-sm">Help & Support</span>
@@ -172,7 +190,6 @@ export function Account() {
         </Card>
       </div>
 
-      {/* Logout */}
       <Button 
         variant="outline" 
         className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
@@ -181,14 +198,12 @@ export function Account() {
         Log Out
       </Button>
 
-      {/* Version Info */}
       <div className="text-center text-gray-500 text-xs pb-4">
         Bond Token Nigeria v1.0.0
         <br />
         Secured with quantum-resistant cryptography
       </div>
 
-      {/* Role Selector Modal */}
       <RoleSelector open={showRoleSelector} onClose={() => setShowRoleSelector(false)} />
     </div>
   );
