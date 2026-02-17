@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
@@ -8,7 +8,11 @@ import { Label } from './ui/label';
 import { InfoTooltip } from './InfoTooltip';
 import { TrendingUp, Calendar, Percent, Target } from 'lucide-react';
 
-export function BuyBonds() {
+interface BuyBondsProps {
+  onNavigate?: (tab: string) => void;
+}
+
+export function BuyBonds({ onNavigate }: BuyBondsProps) {
   const [selectedBond, setSelectedBond] = useState<any>(null);
   const [purchaseAmount, setPurchaseAmount] = useState('');
 
@@ -76,10 +80,16 @@ export function BuyBonds() {
   };
 
   const handlePurchase = () => {
-    // In a real app, this would process the purchase
+    
     alert(`Purchase successful! You've invested ₦${parseInt(purchaseAmount).toLocaleString()} in ${selectedBond.name}`);
+    
     setSelectedBond(null);
     setPurchaseAmount('');
+    
+    
+    if (onNavigate) {
+      onNavigate('dashboard');
+    }
   };
 
   const calculateAnnualReturn = () => {

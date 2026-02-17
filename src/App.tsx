@@ -15,7 +15,6 @@ import {
   LayoutDashboard, 
   ShoppingCart, 
   User, 
-  X, 
   CreditCard, 
   BellRing, 
   Smartphone, 
@@ -39,19 +38,29 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [activeFeature, setActiveFeature] = useState<string | null>(null);
   const [isRegistered, setIsRegistered] = useState(false);
+  
   const [securityView, setSecurityView] = useState<'main' | 'change-pin'>('main');
   const [paymentView, setPaymentView] = useState<'list' | 'add' | 'success'>('list');
+  const [withdrawView, setWithdrawView] = useState<'form' | 'success'>('form');
+  const [addFundsView, setAddFundsView] = useState<'details' | 'success'>('details');
+
   const [paymentMethods, setPaymentMethods] = useState([
     { id: 1, type: 'Visa', last4: '4242', expiry: '12/26', holder: 'Oluwaseun Adebayo', status: 'Primary' }
   ]);
+
   const [newCardForm, setNewCardForm] = useState({ number: '', expiry: '', cvv: '', holder: '' });
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+
   const { roleConfig } = useUserRole();
 
   const handleFeatureOpen = (feature: string) => {
     setActiveFeature(feature);
     setSecurityView('main');
-    setPaymentView('list'); 
+    setPaymentView('list');
+    setWithdrawView('form');
+    setAddFundsView('details');
     setNewCardForm({ number: '', expiry: '', cvv: '', holder: '' });
+    setWithdrawAmount('');
   };
   
   const handleFeatureClose = () => setActiveFeature(null);
@@ -71,6 +80,14 @@ function AppContent() {
         setPaymentMethods([...paymentMethods, newCard]);
         setPaymentView('list'); 
     }, 1500);
+  };
+
+  const handleWithdraw = () => {
+    setWithdrawView('success');
+  };
+
+  const handleConfirmDeposit = () => {
+    setAddFundsView('success');
   };
 
   if (!isRegistered) {
@@ -151,8 +168,12 @@ function AppContent() {
                 <TabsContent value="dashboard" className="mt-0">
                   {roleConfig.isRegulator ? <RegulatoryDashboard onFeatureOpen={handleFeatureOpen} /> : <Dashboard onFeatureOpen={handleFeatureOpen} />}
                 </TabsContent>
-                <TabsContent value="buy-bonds" className="mt-0"><BuyBonds /></TabsContent>
-                <TabsContent value="account" className="mt-0"><Account onFeatureOpen={handleFeatureOpen} /></TabsContent>
+                <TabsContent value="buy-bonds" className="mt-0">
+                  <BuyBonds onNavigate={setActiveTab} />
+                </TabsContent>
+                <TabsContent value="account" className="mt-0">
+                  <Account onFeatureOpen={handleFeatureOpen} />
+                </TabsContent>
               </Tabs>
             </div>
 
@@ -182,6 +203,8 @@ function AppContent() {
                     
                     {activeFeature === 'payment-methods' && paymentView === 'add' ? 'Add New Card' : 
                      securityView === 'change-pin' ? 'Change PIN' : 
+                     activeFeature === 'withdraw' && withdrawView === 'success' ? 'Processing Withdrawal' :
+                     activeFeature === 'add-funds' && addFundsView === 'success' ? 'Deposit Initiated' :
                      activeFeature?.replace('-', ' ')}
                   </DialogTitle>
                   <DialogDescription>
@@ -195,44 +218,80 @@ function AppContent() {
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="py-2">
+                <div className="py-4">
                   {activeFeature === 'add-funds' && (
-                    <div className="space-y-4">
-                      <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                        <p className="text-xs text-slate-500 font-bold mb-2 uppercase">Virtual Account Details</p>
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-2xl font-mono text-slate-900">9023485122</span>
-                          <Copy size={18} className="text-[#008753] cursor-pointer" />
+                    <>
+                      {addFundsView === 'details' ? (
+                        <div className="space-y-4">
+                          <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                            <p className="text-xs text-slate-500 font-bold mb-2 uppercase tracking-wide">Virtual Account Details</p>
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-2xl font-mono text-slate-900 tracking-wider">9023485122</span>
+                              <Copy size={18} className="text-[#008753] cursor-pointer hover:opacity-80 transition-opacity" />
+                            </div>
+                            <p className="text-sm text-slate-600 font-medium">Wema Bank • BTN-Olayimika</p>
+                          </div>
+                          <div className="flex gap-3 text-xs text-blue-700 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                            <AlertCircle size={18} className="shrink-0" />
+                            <p className="leading-relaxed">Transfers are processed instantly. Please ensure you transfer from an account bearing your registered name.</p>
+                          </div>
                         </div>
-                        <p className="text-sm text-slate-600">Wema Bank • BTN-Olayimika</p>
-                      </div>
-                      <div className="flex gap-2 text-xs text-blue-700 bg-blue-50 p-3 rounded-lg border border-blue-100">
-                        <AlertCircle size={16} className="shrink-0 mt-0.5" />
-                        <p>Transfers are processed instantly.</p>
-                      </div>
-                    </div>
+                      ) : (
+                        <div className="py-8 text-center animate-in zoom-in-95 duration-300">
+                          <div className="size-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <CheckCircle2 size={32} className="text-[#008753]" />
+                          </div>
+                          <h3 className="text-lg font-bold text-slate-900">Deposit Confirmed</h3>
+                          <p className="text-sm text-slate-500 mt-2">
+                            Your transfer has been received. Your wallet balance has been updated.
+                          </p>
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {activeFeature === 'withdraw' && (
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="amount">Amount to Withdraw</Label>
-                        <Input 
-                          id="amount"
-                          type="number" 
-                          placeholder="₦ 0.00" 
-                          className="text-lg"
-                        />
-                        <p className="text-xs text-slate-500 text-right">Available: ₦125,000.00</p>
-                      </div>
-                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 flex gap-3">
-                        <Landmark className="text-slate-500 shrink-0" size={20} />
-                        <div>
-                          <p className="text-sm font-medium text-slate-900">Stanbic IBTC Bank</p>
-                          <p className="text-xs text-slate-500">Oluwaseun Adebayo • ****8902</p>
+                    <>
+                      {withdrawView === 'form' ? (
+                        <div className="space-y-6">
+                          <div className="space-y-2">
+                            <Label htmlFor="amount" className="text-sm font-semibold">Amount to Withdraw</Label>
+                            <div className="relative">
+                              <span className="absolute left-4 top-3 text-slate-500 font-medium">₦</span>
+                              <Input 
+                                id="amount"
+                                type="number" 
+                                placeholder="0.00" 
+                                className="pl-9 h-12 text-lg font-medium"
+                                value={withdrawAmount}
+                                onChange={(e) => setWithdrawAmount(e.target.value)}
+                              />
+                            </div>
+                            <p className="text-xs text-slate-500 text-right font-medium">Available: ₦125,000.00</p>
+                          </div>
+                          <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 flex items-center gap-4">
+                            <div className="size-10 bg-white border border-slate-200 rounded-full flex items-center justify-center shrink-0">
+                              <Landmark className="text-blue-600" size={18} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-slate-900">Stanbic IBTC Bank</p>
+                              <p className="text-xs text-slate-500 mt-0.5">Oluwaseun Adebayo • ****8902</p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
+                      ) : (
+                        <div className="py-8 text-center animate-in zoom-in-95 duration-300">
+                          <div className="size-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <CheckCircle2 size={32} className="text-[#008753]" />
+                          </div>
+                          <h3 className="text-lg font-bold text-slate-900">Withdrawal Initiated</h3>
+                          <p className="text-sm text-slate-500 mt-2">
+                            You are withdrawing <span className="font-bold text-slate-900">₦{Number(withdrawAmount).toLocaleString()}</span> to your Stanbic IBTC account.
+                          </p>
+                          <p className="text-xs text-slate-400 mt-4">Funds usually arrive within 15 minutes.</p>
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {activeFeature === 'payment-methods' && (
@@ -240,15 +299,17 @@ function AppContent() {
                         {paymentView === 'list' && (
                             <div className="space-y-3">
                                 {paymentMethods.map((card) => (
-                                    <div key={card.id} className={`flex items-center justify-between p-3 border rounded-lg ${card.status === 'Primary' ? 'border-[#008753] bg-[#008753]/5' : 'border-slate-200'}`}>
-                                        <div className="flex items-center gap-3">
-                                            <CreditCard className={card.status === 'Primary' ? "text-[#008753]" : "text-slate-400"} size={20} />
+                                    <div key={card.id} className={`flex items-center justify-between p-4 border rounded-lg ${card.status === 'Primary' ? 'border-[#008753] bg-[#008753]/5' : 'border-slate-200'}`}>
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-white p-2 rounded-md shadow-sm border border-slate-100">
+                                              <CreditCard className={card.status === 'Primary' ? "text-[#008753]" : "text-slate-400"} size={20} />
+                                            </div>
                                             <div>
-                                                <p className="text-sm font-medium text-slate-900">{card.type} • {card.last4}</p>
-                                                <p className="text-xs text-slate-500">Expires {card.expiry}</p>
+                                                <p className="text-sm font-bold text-slate-900">{card.type} • {card.last4}</p>
+                                                <p className="text-xs text-slate-500 mt-0.5">Expires {card.expiry}</p>
                                             </div>
                                         </div>
-                                        <Badge className={card.status === 'Primary' ? "bg-[#008753]" : "bg-slate-200 text-slate-600 hover:bg-slate-300"}>
+                                        <Badge className={card.status === 'Primary' ? "bg-[#008753] text-white" : "bg-slate-100 text-slate-600"}>
                                             {card.status}
                                         </Badge>
                                     </div>
@@ -256,7 +317,7 @@ function AppContent() {
                                 
                                 <Button 
                                     variant="outline" 
-                                    className="w-full border-dashed"
+                                    className="w-full border-dashed h-12 text-slate-600 hover:text-[#008753] hover:border-[#008753] hover:bg-green-50 transition-colors"
                                     onClick={() => setPaymentView('add')}
                                 >
                                     + Add New Payment Method
@@ -267,12 +328,12 @@ function AppContent() {
                         {paymentView === 'add' && (
                             <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
                                 <div className="space-y-2">
-                                    <Label>Card Number</Label>
+                                    <Label className="text-xs font-semibold uppercase text-slate-500">Card Number</Label>
                                     <div className="relative">
-                                        <CreditCard className="absolute left-3 top-3 text-slate-400" size={18} />
+                                        <CreditCard className="absolute left-3 top-3.5 text-slate-400" size={18} />
                                         <Input 
                                             placeholder="0000 0000 0000 0000" 
-                                            className="pl-10" 
+                                            className="pl-10 h-11 text-base" 
                                             value={newCardForm.number}
                                             onChange={(e) => setNewCardForm({...newCardForm, number: e.target.value})}
                                             maxLength={19}
@@ -281,19 +342,21 @@ function AppContent() {
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>Expiry Date</Label>
+                                        <Label className="text-xs font-semibold uppercase text-slate-500">Expiry Date</Label>
                                         <Input 
                                             placeholder="MM/YY" 
+                                            className="h-11 text-base"
                                             value={newCardForm.expiry}
                                             onChange={(e) => setNewCardForm({...newCardForm, expiry: e.target.value})}
                                             maxLength={5}
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>CVV</Label>
+                                        <Label className="text-xs font-semibold uppercase text-slate-500">CVV</Label>
                                         <Input 
                                             type="password" 
                                             placeholder="123" 
+                                            className="h-11 text-base tracking-widest"
                                             maxLength={3} 
                                             value={newCardForm.cvv}
                                             onChange={(e) => setNewCardForm({...newCardForm, cvv: e.target.value})}
@@ -301,16 +364,17 @@ function AppContent() {
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Cardholder Name</Label>
+                                    <Label className="text-xs font-semibold uppercase text-slate-500">Cardholder Name</Label>
                                     <Input 
                                         placeholder="e.g. Oluwaseun Adebayo" 
+                                        className="h-11 text-base"
                                         value={newCardForm.holder}
                                         onChange={(e) => setNewCardForm({...newCardForm, holder: e.target.value})}
                                     />
                                 </div>
-                                <div className="bg-slate-50 p-3 rounded-lg flex gap-2 items-start">
-                                    <ShieldCheck size={16} className="text-green-600 mt-0.5 shrink-0" />
-                                    <p className="text-xs text-slate-600">Your card details are secured with AES-256 encryption. We will charge a refundable ₦50 to verify this card.</p>
+                                <div className="bg-slate-50 p-4 rounded-lg flex gap-3 items-start border border-slate-100 mt-2">
+                                    <ShieldCheck size={18} className="text-green-600 shrink-0" />
+                                    <p className="text-xs text-slate-600 leading-relaxed">Your card details are secured with AES-256 encryption. We will charge a refundable ₦50 to verify this card.</p>
                                 </div>
                             </div>
                         )}
@@ -328,22 +392,22 @@ function AppContent() {
                   )}
 
                   {activeFeature === 'notifications' && (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {[
                         { t: 'Coupon Received', d: '₦24,500 interest paid', h: '2h ago' },
                         { t: 'Price Alert', d: 'FGN 2027 is up 0.4%', h: '5h ago' },
                         { t: 'Security Alert', d: 'New login detected', h: '1d ago' }
                       ].map((n, i) => (
-                        <div key={i} className="flex gap-3 p-3 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-100">
-                          <div className="size-8 bg-slate-100 rounded-full flex items-center justify-center shrink-0">
-                            <BellRing size={16} className="text-[#008753]" />
+                        <div key={i} className="flex gap-4 p-4 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-100 cursor-pointer">
+                          <div className="size-10 bg-slate-100 rounded-full flex items-center justify-center shrink-0">
+                            <BellRing size={18} className="text-[#008753]" />
                           </div>
                           <div className="flex-1">
-                            <div className="flex justify-between items-start">
-                              <p className="text-sm font-medium text-slate-900">{n.t}</p>
-                              <span className="text-[10px] text-slate-400">{n.h}</span>
+                            <div className="flex justify-between items-start mb-1">
+                              <p className="text-sm font-bold text-slate-900">{n.t}</p>
+                              <span className="text-[10px] font-semibold text-slate-400 uppercase">{n.h}</span>
                             </div>
-                            <p className="text-xs text-slate-500">{n.d}</p>
+                            <p className="text-xs text-slate-600">{n.d}</p>
                           </div>
                         </div>
                       ))}
@@ -351,91 +415,104 @@ function AppContent() {
                   )}
 
                   {activeFeature === 'security-settings' && (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {securityView === 'main' ? (
                         <>
-                          <div className="flex items-center justify-between p-3 border rounded-lg">
-                            <div className="flex items-center gap-3">
-                              <Smartphone size={18} className="text-slate-500" />
+                          <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+                            <div className="flex items-center gap-4">
+                              <div className="bg-slate-100 p-2 rounded-lg">
+                                <Smartphone size={20} className="text-slate-600" />
+                              </div>
                               <div>
-                                <p className="text-sm font-medium">Biometric Login</p>
-                                <p className="text-xs text-slate-500">Face ID / Fingerprint</p>
+                                <p className="text-sm font-bold text-slate-900">Biometric Login</p>
+                                <p className="text-xs text-slate-500 mt-0.5">Face ID / Fingerprint</p>
                               </div>
                             </div>
-                            <Badge className="bg-emerald-600">Enabled</Badge>
+                            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0">Enabled</Badge>
                           </div>
                           
                           <button 
                             onClick={() => setSecurityView('change-pin')}
-                            className="w-full flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors text-left"
+                            className="w-full flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:border-[#008753] hover:bg-[#008753]/5 transition-all text-left group"
                           >
-                            <div className="flex items-center gap-3">
-                              <ShieldCheck size={18} className="text-slate-500" />
+                            <div className="flex items-center gap-4">
+                              <div className="bg-slate-100 p-2 rounded-lg group-hover:bg-white transition-colors">
+                                <ShieldCheck size={20} className="text-slate-600 group-hover:text-[#008753]" />
+                              </div>
                               <div>
-                                <p className="text-sm font-medium">Transaction PIN</p>
-                                <p className="text-xs text-slate-500">Change 4-digit PIN</p>
+                                <p className="text-sm font-bold text-slate-900">Transaction PIN</p>
+                                <p className="text-xs text-slate-500 mt-0.5">Change 4-digit PIN</p>
                               </div>
                             </div>
-                            <ChevronRight size={16} className="text-slate-400" />
+                            <ChevronRight size={18} className="text-slate-400 group-hover:text-[#008753]" />
                           </button>
 
-                          <button className="w-full flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors text-left">
-                            <div className="flex items-center gap-3">
-                              <Key size={18} className="text-slate-500" />
+                          <button className="w-full flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:border-[#008753] hover:bg-[#008753]/5 transition-all text-left group">
+                            <div className="flex items-center gap-4">
+                              <div className="bg-slate-100 p-2 rounded-lg group-hover:bg-white transition-colors">
+                                <Key size={20} className="text-slate-600 group-hover:text-[#008753]" />
+                              </div>
                               <div>
-                                <p className="text-sm font-medium">Password</p>
-                                <p className="text-xs text-slate-500">Last updated 3mo ago</p>
+                                <p className="text-sm font-bold text-slate-900">Password</p>
+                                <p className="text-xs text-slate-500 mt-0.5">Last updated 3mo ago</p>
                               </div>
                             </div>
-                            <ChevronRight size={16} className="text-slate-400" />
+                            <ChevronRight size={18} className="text-slate-400 group-hover:text-[#008753]" />
                           </button>
                         </>
                       ) : (
-                        <div className="space-y-4">
+                        <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
                           <div className="space-y-2">
-                            <Label>Current PIN</Label>
-                            <Input type="password" placeholder="••••" className="text-center text-lg tracking-widest" maxLength={4} />
+                            <Label className="text-xs font-semibold text-slate-500 uppercase">Current PIN</Label>
+                            <Input type="password" placeholder="••••" className="text-center text-2xl tracking-[1em] h-14" maxLength={4} />
                           </div>
                           <div className="space-y-2">
-                            <Label>New PIN</Label>
-                            <Input type="password" placeholder="••••" className="text-center text-lg tracking-widest" maxLength={4} />
+                            <Label className="text-xs font-semibold text-slate-500 uppercase">New PIN</Label>
+                            <Input type="password" placeholder="••••" className="text-center text-2xl tracking-[1em] h-14" maxLength={4} />
                           </div>
-                          <Button className="w-full bg-[#008753] hover:bg-[#006d42] text-white" onClick={() => setSecurityView('main')}>Update PIN</Button>
+                          <Button className="w-full bg-[#008753] hover:bg-[#006d42] text-white h-12 mt-2" onClick={() => setSecurityView('main')}>
+                            Update PIN
+                          </Button>
                         </div>
                       )}
                     </div>
                   )}
 
                   {activeFeature === 'help-support' && (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <button className="p-4 border rounded-lg hover:bg-gray-50 text-center">
-                          <div className="mx-auto mb-2 bg-green-50 w-10 h-10 rounded-full flex items-center justify-center">
-                            <MessageCircle className="text-[#008753]" size={20} />
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <button className="p-5 border border-slate-200 rounded-lg hover:border-[#008753] hover:bg-[#008753]/5 transition-all text-center group">
+                          <div className="size-12 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-white transition-colors">
+                            <MessageCircle className="text-[#008753]" size={22} />
                           </div>
-                          <p className="text-xs font-bold text-slate-900">Live Chat</p>
+                          <p className="text-sm font-bold text-slate-900">Live Chat</p>
                         </button>
-                        <button className="p-4 border rounded-lg hover:bg-gray-50 text-center">
-                          <div className="mx-auto mb-2 bg-blue-50 w-10 h-10 rounded-full flex items-center justify-center">
-                            <Headphones className="text-blue-600" size={20} />
+                        <button className="p-5 border border-slate-200 rounded-lg hover:border-[#008753] hover:bg-[#008753]/5 transition-all text-center group">
+                          <div className="size-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-white transition-colors">
+                            <Headphones className="text-blue-600" size={22} />
                           </div>
-                          <p className="text-xs font-bold text-slate-900">Call Support</p>
+                          <p className="text-sm font-bold text-slate-900">Call Support</p>
                         </button>
                       </div>
-                      <div className="p-3 bg-slate-900 rounded-lg text-center">
-                        <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Support ID</p>
-                        <p className="text-white font-mono text-sm">BTN-8821-XP</p>
+                      <div className="p-4 bg-slate-900 rounded-lg text-white flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Support ID</p>
+                          <p className="font-mono text-base font-bold">BTN-8821-XP</p>
+                        </div>
+                        <Copy size={18} className="text-slate-400 cursor-pointer hover:text-white transition-colors" />
                       </div>
                     </div>
                   )}
                 </div>
 
-                <DialogFooter>
-                  {(activeFeature === 'add-funds' || activeFeature === 'withdraw' || (activeFeature === 'payment-methods' && paymentView === 'add')) && (
-                    <div className="flex gap-2 w-full">
+                <DialogFooter className="mt-6">
+                  {(activeFeature === 'add-funds' && addFundsView === 'details') || 
+                   (activeFeature === 'withdraw' && withdrawView === 'form') || 
+                   (activeFeature === 'payment-methods' && paymentView === 'add') ? (
+                    <div className="flex gap-3 w-full">
                       <Button 
                         variant="outline" 
-                        className="flex-1" 
+                        className="flex-1 h-11" 
                         onClick={() => {
                             if (activeFeature === 'payment-methods') setPaymentView('list');
                             else handleFeatureClose();
@@ -445,19 +522,21 @@ function AppContent() {
                       </Button>
                       
                       {activeFeature === 'payment-methods' ? (
-                        <Button className="flex-1 bg-[#008753] hover:bg-[#006d42] text-white" onClick={handleAddCard}>Save Card</Button>
+                        <Button className="flex-1 bg-[#008753] hover:bg-[#006d42] text-white h-11" onClick={handleAddCard}>Save Card</Button>
                       ) : activeFeature === 'add-funds' ? (
-                        <Button className="flex-1 bg-[#008753] hover:bg-[#006d42] text-white" onClick={handleFeatureClose}>Sent</Button>
+                        <Button className="flex-1 bg-[#008753] hover:bg-[#006d42] text-white h-11" onClick={handleConfirmDeposit}>Confirm Deposit</Button>
                       ) : (
-                        <Button className="flex-1 bg-[#008753] hover:bg-[#006d42] text-white" onClick={handleFeatureClose}>Confirm</Button>
+                        <Button className="flex-1 bg-[#008753] hover:bg-[#006d42] text-white h-11" onClick={handleWithdraw}>Confirm Withdrawal</Button>
                       )}
                     </div>
-                  )}
-                  {['notifications', 'help-support'].includes(activeFeature) && (
-                    <Button className="w-full" variant="outline" onClick={handleFeatureClose}>Close</Button>
-                  )}
-                  {activeFeature === 'payment-methods' && paymentView === 'list' && (
-                     <Button className="w-full" variant="outline" onClick={handleFeatureClose}>Close</Button>
+                  ) : null}
+                  
+                  {(['notifications', 'help-support'].includes(activeFeature) || 
+                    (activeFeature === 'payment-methods' && paymentView === 'list') ||
+                    (activeFeature === 'payment-methods' && paymentView === 'success') ||
+                    (activeFeature === 'withdraw' && withdrawView === 'success') ||
+                    (activeFeature === 'add-funds' && addFundsView === 'success')) && (
+                    <Button className="w-full h-11" variant="outline" onClick={handleFeatureClose}>Close</Button>
                   )}
                 </DialogFooter>
               </DialogContent>

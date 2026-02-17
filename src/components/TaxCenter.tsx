@@ -1,14 +1,17 @@
+import { useState } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { InfoTooltip } from './InfoTooltip';
-import { X, FileText, Download, Calendar, CheckCircle } from 'lucide-react';
+import { X, FileText, Download, Calendar, CheckCircle, Loader2 } from 'lucide-react';
 
 interface TaxCenterProps {
   onClose: () => void;
 }
 
 export function TaxCenter({ onClose }: TaxCenterProps) {
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+
   const taxStatements = [
     {
       id: 1,
@@ -60,10 +63,27 @@ export function TaxCenter({ onClose }: TaxCenterProps) {
     },
   ];
 
+  const handleDownload = (id: number, period: string, year: number) => {
+    setDownloadingId(id);
+
+    setTimeout(() => {
+      const element = document.createElement("a");
+      const file = new Blob(
+        [`Bond Token Nigeria - Tax Statement\nPeriod: ${period} ${year}\nStatus: Tax Exempt\n\nThis document confirms that all coupon payments received are exempt from Personal Income Tax.`], 
+        {type: 'text/plain'}
+      );
+      element.href = URL.createObjectURL(file);
+      element.download = `Tax_Statement_${year}_${period.replace(' ', '_')}.txt`;
+      document.body.appendChild(element); 
+      element.click();
+      
+      setDownloadingId(null);
+    }, 1500);
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
       <div className="bg-white w-full sm:max-w-2xl sm:mx-4 rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="bg-purple-50 p-2 rounded-lg">
@@ -82,9 +102,7 @@ export function TaxCenter({ onClose }: TaxCenterProps) {
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-4 space-y-6">
-          {/* Tax-Free Notice */}
           <Card className="bg-green-50 border-green-200">
             <CardContent className="p-4">
               <div className="flex gap-3">
@@ -99,7 +117,6 @@ export function TaxCenter({ onClose }: TaxCenterProps) {
             </CardContent>
           </Card>
 
-          {/* Summary Card */}
           <Card className="border-gray-200">
             <CardContent className="p-4">
               <h4 className="text-gray-900 mb-3 flex items-center gap-2">
@@ -121,7 +138,6 @@ export function TaxCenter({ onClose }: TaxCenterProps) {
             </CardContent>
           </Card>
 
-          {/* Upcoming Payments */}
           <div className="space-y-3">
             <h3 className="text-gray-900 flex items-center gap-2">
               <Calendar size={20} className="text-gray-600" />
@@ -151,7 +167,6 @@ export function TaxCenter({ onClose }: TaxCenterProps) {
             ))}
           </div>
 
-          {/* Tax Statements */}
           <div className="space-y-3">
             <h3 className="text-gray-900 flex items-center gap-2">
               <FileText size={20} className="text-gray-600" />
@@ -177,12 +192,23 @@ export function TaxCenter({ onClose }: TaxCenterProps) {
                       Generated: {new Date(statement.date).toLocaleDateString('en-NG')}
                     </span>
                     <Button 
-                      size="sm"
+                      size="sm" 
                       variant="outline"
                       className="border-[#008753] text-[#008753] hover:bg-[#008753]/10"
+                      onClick={() => handleDownload(statement.id, statement.period, statement.year)}
+                      disabled={downloadingId === statement.id}
                     >
-                      <Download size={16} className="mr-2" />
-                      Download PDF
+                      {downloadingId === statement.id ? (
+                        <>
+                          <Loader2 size={16} className="mr-2 animate-spin" />
+                          Downloading...
+                        </>
+                      ) : (
+                        <>
+                          <Download size={16} className="mr-2" />
+                          Download PDF
+                        </>
+                      )}
                     </Button>
                   </div>
                 </CardContent>
@@ -190,7 +216,6 @@ export function TaxCenter({ onClose }: TaxCenterProps) {
             ))}
           </div>
 
-          {/* Info Section */}
           <Card className="bg-blue-50 border-blue-200">
             <CardContent className="p-4">
               <h4 className="text-blue-900 mb-2">About Tax Statements</h4>

@@ -6,7 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { InfoTooltip } from './InfoTooltip';
-import { X, RefreshCw, TrendingUp, TrendingDown, User } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
+import { X, RefreshCw, TrendingUp, TrendingDown, User, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface P2PExchangeProps {
   onClose: () => void;
@@ -14,6 +15,19 @@ interface P2PExchangeProps {
 
 export function P2PExchange({ onClose }: P2PExchangeProps) {
   const [activeTab, setActiveTab] = useState('buy');
+  
+  // Buy State
+  const [selectedListing, setSelectedListing] = useState<any>(null);
+  const [purchaseSuccess, setPurchaseSuccess] = useState(false);
+
+  // Sell/Create State
+  const [sellAmount, setSellAmount] = useState('');
+  const [sellDiscount, setSellDiscount] = useState('');
+  const [listingSuccess, setListingSuccess] = useState(false);
+
+  // Edit State
+  const [editingListing, setEditingListing] = useState<any>(null);
+  const [editSuccess, setEditSuccess] = useState(false);
 
   const listings = [
     {
@@ -67,11 +81,46 @@ export function P2PExchange({ onClose }: P2PExchangeProps) {
     },
   ];
 
+  
+
+  // Buy Flow
+  const handleBuyClick = (listing: any) => {
+    setSelectedListing(listing);
+    setPurchaseSuccess(false);
+  };
+  const confirmPurchase = () => setPurchaseSuccess(true);
+
+  // Sell Flow
+  const handleCreateListing = () => {
+    setListingSuccess(true);
+  };
+
+  // Edit Flow
+  const handleEditClick = (listing: any) => {
+    setEditingListing(listing);
+    setEditSuccess(false);
+  };
+  const confirmEdit = () => setEditSuccess(true);
+
+  // Reset
+  const closeAllDialogs = () => {
+    setSelectedListing(null);
+    setListingSuccess(false);
+    setEditingListing(null);
+    setPurchaseSuccess(false);
+    setEditSuccess(false);
+  };
+
+  // Calculated values for Sell Tab
+  const calculatedSellPrice = sellAmount && sellDiscount 
+    ? parseInt(sellAmount) * (1 - parseFloat(sellDiscount) / 100) 
+    : 0;
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
       <div className="bg-white w-full sm:max-w-2xl sm:mx-4 rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between z-10">
           <div className="flex items-center gap-2">
             <div className="bg-blue-50 p-2 rounded-lg">
               <RefreshCw size={24} className="text-blue-600" />
@@ -165,7 +214,10 @@ export function P2PExchange({ onClose }: P2PExchangeProps) {
                         <span className="text-gray-600 text-sm">Instant Savings</span>
                         <span className="text-green-600">₦{(listing.amount - listing.price).toLocaleString()}</span>
                       </div>
-                      <Button className="w-full bg-[#008753] hover:bg-[#006d42]">
+                      <Button 
+                        className="w-full bg-[#008753] hover:bg-[#006d42]"
+                        onClick={() => handleBuyClick(listing)}
+                      >
                         Buy Now
                       </Button>
                     </div>
@@ -208,6 +260,8 @@ export function P2PExchange({ onClose }: P2PExchangeProps) {
                       type="number" 
                       placeholder="Enter amount"
                       className="mt-1"
+                      value={sellAmount}
+                      onChange={(e) => setSellAmount(e.target.value)}
                     />
                   </div>
 
@@ -219,6 +273,8 @@ export function P2PExchange({ onClose }: P2PExchangeProps) {
                       placeholder="e.g., 3.0"
                       className="mt-1"
                       step="0.1"
+                      value={sellDiscount}
+                      onChange={(e) => setSellDiscount(e.target.value)}
                     />
                     <p className="text-gray-600 text-xs mt-1">
                       Typical discounts range from 2-5% for quick sales
@@ -228,19 +284,25 @@ export function P2PExchange({ onClose }: P2PExchangeProps) {
                   <div className="bg-gray-50 p-4 rounded-lg space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Face Value</span>
-                      <span className="text-gray-900">₦500,000</span>
+                      <span className="text-gray-900">₦{sellAmount ? parseInt(sellAmount).toLocaleString() : '0'}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Discount (3%)</span>
-                      <span className="text-red-600">-₦15,000</span>
+                      <span className="text-gray-600">Discount ({sellDiscount || '0'}%)</span>
+                      <span className="text-red-600">
+                         -₦{sellAmount && sellDiscount ? (parseInt(sellAmount) * parseFloat(sellDiscount) / 100).toLocaleString() : '0'}
+                      </span>
                     </div>
                     <div className="flex justify-between pt-2 border-t border-gray-200">
                       <span className="text-gray-900">You'll Receive</span>
-                      <span className="text-[#008753]">₦485,000</span>
+                      <span className="text-[#008753]">₦{calculatedSellPrice.toLocaleString()}</span>
                     </div>
                   </div>
 
-                  <Button className="w-full bg-[#008753] hover:bg-[#006d42]">
+                  <Button 
+                    className="w-full bg-[#008753] hover:bg-[#006d42]"
+                    disabled={!sellAmount || !sellDiscount}
+                    onClick={handleCreateListing}
+                  >
                     Create Listing
                   </Button>
                 </CardContent>
@@ -282,11 +344,15 @@ export function P2PExchange({ onClose }: P2PExchangeProps) {
                       </div>
 
                       <div className="flex gap-2">
-                        <Button variant="outline" className="flex-1">
+                        <Button 
+                          variant="outline" 
+                          className="flex-1"
+                          onClick={() => handleEditClick(listing)}
+                        >
                           Edit
                         </Button>
                         <Button variant="outline" className="flex-1 text-red-600 border-red-200 hover:bg-red-50">
-                          Cancel
+                          Cancel Listing
                         </Button>
                       </div>
                     </CardContent>
@@ -313,6 +379,152 @@ export function P2PExchange({ onClose }: P2PExchangeProps) {
           </Tabs>
         </div>
       </div>
+
+  
+
+      {/* 1. Buy Confirmation Dialog */}
+      <Dialog open={!!selectedListing} onOpenChange={closeAllDialogs}>
+        <DialogContent className="max-w-md mx-4">
+            <DialogHeader>
+                <DialogTitle>{purchaseSuccess ? 'Purchase Successful!' : 'Confirm Purchase'}</DialogTitle>
+                <DialogDescription>
+                    {purchaseSuccess ? 'The bond has been added to your portfolio.' : `You are about to purchase ${selectedListing?.bondName}`}
+                </DialogDescription>
+            </DialogHeader>
+
+            {selectedListing && !purchaseSuccess && (
+                <div className="space-y-4 py-2">
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                        <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Seller</span>
+                            <span className="text-sm font-medium">{selectedListing.seller}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Bond Value</span>
+                            <span className="text-sm font-medium">₦{selectedListing.amount.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Discount</span>
+                            <span className="text-sm font-medium text-green-600">{selectedListing.discount}% Off</span>
+                        </div>
+                        <div className="pt-2 border-t border-gray-200 flex justify-between">
+                            <span className="text-sm font-bold text-gray-900">Total Price</span>
+                            <span className="text-lg font-bold text-[#008753]">₦{selectedListing.price.toLocaleString()}</span>
+                        </div>
+                    </div>
+                    
+                    <div className="bg-blue-50 p-3 rounded-lg flex gap-3 text-xs text-blue-700">
+                        <InfoTooltip content="Funds will be held in escrow until the transfer is complete." />
+                         <p>Funds will be deducted from your wallet immediately. Ownership transfer is instant.</p>
+                    </div>
+                </div>
+            )}
+
+            {purchaseSuccess && (
+                <div className="py-6 text-center">
+                    <div className="size-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <CheckCircle2 size={32} className="text-[#008753]" />
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                        You have successfully purchased <strong>{selectedListing?.bondName}</strong> from {selectedListing?.seller}.
+                    </p>
+                    <div className="bg-gray-50 p-3 rounded-lg inline-block mx-auto mb-4">
+                        <p className="text-sm text-gray-500">Transaction ID: <span className="font-mono text-gray-900">TX-{Date.now().toString().slice(-6)}</span></p>
+                    </div>
+                </div>
+            )}
+
+            <DialogFooter>
+                {purchaseSuccess ? (
+                    <Button className="w-full bg-[#008753] hover:bg-[#006d42]" onClick={closeAllDialogs}>
+                        Return to Exchange
+                    </Button>
+                ) : (
+                    <div className="flex gap-2 w-full">
+                        <Button variant="outline" className="flex-1" onClick={closeAllDialogs}>Cancel</Button>
+                        <Button className="flex-1 bg-[#008753] hover:bg-[#006d42]" onClick={confirmPurchase}>Confirm Purchase</Button>
+                    </div>
+                )}
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 2. Create Listing Success Dialog */}
+      <Dialog open={listingSuccess} onOpenChange={closeAllDialogs}>
+        <DialogContent className="max-w-md mx-4">
+          <DialogHeader>
+            <DialogTitle>Listing Created!</DialogTitle>
+            <DialogDescription>
+              Your bond is now live on the secondary market.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-6 text-center">
+             <div className="size-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                 <CheckCircle2 size={32} className="text-[#008753]" />
+             </div>
+             <p className="text-slate-600 mb-2">You listed <strong>FGN 2034 Bond</strong></p>
+             <p className="text-2xl font-bold text-[#008753]">₦{calculatedSellPrice.toLocaleString()}</p>
+             <p className="text-xs text-slate-400 mt-2">Any active buy orders will be matched instantly.</p>
+          </div>
+
+          <DialogFooter>
+             <Button className="w-full bg-[#008753] hover:bg-[#006d42]" onClick={() => { closeAllDialogs(); setActiveTab('my-listings'); }}>
+                View My Listings
+             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 3. Edit Listing Dialog */}
+      <Dialog open={!!editingListing} onOpenChange={closeAllDialogs}>
+        <DialogContent className="max-w-md mx-4">
+          <DialogHeader>
+            <DialogTitle>{editSuccess ? 'Listing Updated' : 'Edit Listing'}</DialogTitle>
+            <DialogDescription>
+              {editSuccess ? 'Your changes have been saved.' : `Update price or discount for ${editingListing?.bondName}`}
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingListing && !editSuccess && (
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label>Discount Percentage (%)</Label>
+                <Input defaultValue={editingListing.discount} />
+              </div>
+              <div className="space-y-2">
+                <Label>Selling Price (₦)</Label>
+                <Input defaultValue={editingListing.price} />
+              </div>
+              <div className="bg-amber-50 p-3 rounded-lg flex gap-2 items-start text-xs text-amber-800">
+                <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                 Changing the price will remove existing offers on this listing.
+              </div>
+            </div>
+          )}
+
+          {editSuccess && (
+            <div className="py-6 text-center">
+              <div className="size-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                 <CheckCircle2 size={32} className="text-[#008753]" />
+              </div>
+              <p className="text-slate-600">Your listing has been updated successfully.</p>
+            </div>
+          )}
+
+          <DialogFooter>
+            {editSuccess ? (
+               <Button className="w-full bg-[#008753]" onClick={closeAllDialogs}>Done</Button>
+            ) : (
+              <div className="flex gap-2 w-full">
+                <Button variant="outline" className="flex-1" onClick={closeAllDialogs}>Cancel</Button>
+                <Button className="flex-1 bg-[#008753] hover:bg-[#006d42]" onClick={confirmEdit}>Save Changes</Button>
+              </div>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
