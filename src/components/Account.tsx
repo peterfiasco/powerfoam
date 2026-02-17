@@ -106,7 +106,7 @@ export function Account({ onFeatureOpen }: AccountProps) {
               <Button 
                 onClick={() => onFeatureOpen('withdraw')}
                 variant="outline" 
-                className="flex-1 border-white text-white hover:bg-white/10"
+                className="flex-1 bg-white text-gray-900 hover:bg-gray-1000"
               >
                 Withdraw
               </Button>
