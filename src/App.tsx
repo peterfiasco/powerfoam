@@ -15,6 +15,7 @@ import {
   LayoutDashboard, 
   ShoppingCart, 
   User, 
+  X, 
   CreditCard, 
   BellRing, 
   Smartphone, 
@@ -39,14 +40,38 @@ function AppContent() {
   const [activeFeature, setActiveFeature] = useState<string | null>(null);
   const [isRegistered, setIsRegistered] = useState(false);
   const [securityView, setSecurityView] = useState<'main' | 'change-pin'>('main');
+  const [paymentView, setPaymentView] = useState<'list' | 'add' | 'success'>('list');
+  const [paymentMethods, setPaymentMethods] = useState([
+    { id: 1, type: 'Visa', last4: '4242', expiry: '12/26', holder: 'Oluwaseun Adebayo', status: 'Primary' }
+  ]);
+  const [newCardForm, setNewCardForm] = useState({ number: '', expiry: '', cvv: '', holder: '' });
   const { roleConfig } = useUserRole();
 
   const handleFeatureOpen = (feature: string) => {
     setActiveFeature(feature);
-    setSecurityView('main'); 
+    setSecurityView('main');
+    setPaymentView('list'); 
+    setNewCardForm({ number: '', expiry: '', cvv: '', holder: '' });
   };
   
   const handleFeatureClose = () => setActiveFeature(null);
+
+  const handleAddCard = () => {
+    setPaymentView('success');
+    const last4 = newCardForm.number.length > 4 ? newCardForm.number.slice(-4) : '8899';
+    const newCard = {
+        id: Date.now(),
+        type: 'Mastercard',
+        last4: last4,
+        expiry: newCardForm.expiry || '10/28',
+        holder: newCardForm.holder || 'Oluwaseun Adebayo',
+        status: 'Active'
+    };
+    setTimeout(() => {
+        setPaymentMethods([...paymentMethods, newCard]);
+        setPaymentView('list'); 
+    }, 1500);
+  };
 
   if (!isRegistered) {
     return <RegistrationPage onComplete={() => setIsRegistered(true)} />;
@@ -136,7 +161,6 @@ function AppContent() {
             {activeFeature === 'tax-center' && <TaxCenter onClose={handleFeatureClose} />}
             {activeFeature === 'education-center' && <EducationCenter onClose={handleFeatureClose} />}
 
-            
             <Dialog 
               open={!!activeFeature && ['add-funds', 'withdraw', 'payment-methods', 'notifications', 'security-settings', 'help-support'].includes(activeFeature)} 
               onOpenChange={(open) => !open && handleFeatureClose()}
@@ -144,25 +168,34 @@ function AppContent() {
               <DialogContent className="max-w-md mx-4">
                 <DialogHeader>
                   <DialogTitle className="capitalize flex items-center gap-2">
-                    {securityView === 'change-pin' && (
-                      <button onClick={() => setSecurityView('main')} className="hover:bg-slate-100 p-1 rounded-full mr-1">
-                        <ArrowLeft size={16} />
+                    {(securityView === 'change-pin' || paymentView === 'add') && (
+                      <button 
+                        onClick={() => {
+                            if (activeFeature === 'payment-methods') setPaymentView('list');
+                            else setSecurityView('main');
+                        }} 
+                        className="hover:bg-slate-100 p-1 rounded-full mr-1 transition-colors"
+                      >
+                        <ArrowLeft size={18} className="text-gray-500" />
                       </button>
                     )}
-                    {securityView === 'change-pin' ? 'Change PIN' : activeFeature?.replace('-', ' ')}
+                    
+                    {activeFeature === 'payment-methods' && paymentView === 'add' ? 'Add New Card' : 
+                     securityView === 'change-pin' ? 'Change PIN' : 
+                     activeFeature?.replace('-', ' ')}
                   </DialogTitle>
                   <DialogDescription>
-                    {activeFeature === 'add-funds' && 'Transfer funds to your virtual wallet'}
-                    {activeFeature === 'withdraw' && 'Withdraw funds to your bank account'}
-                    {activeFeature === 'payment-methods' && 'Manage your linked cards and accounts'}
-                    {activeFeature === 'notifications' && 'Your recent alerts and updates'}
-                    {activeFeature === 'security-settings' && 'Manage your account security'}
-                    {activeFeature === 'help-support' && 'Get help with your account'}
+                    {activeFeature === 'payment-methods' && paymentView === 'add' ? 'Enter your card details securely' :
+                     activeFeature === 'add-funds' ? 'Transfer funds to your virtual wallet' :
+                     activeFeature === 'withdraw' ? 'Withdraw funds to your bank account' :
+                     activeFeature === 'payment-methods' ? 'Manage your linked cards and accounts' :
+                     activeFeature === 'notifications' ? 'Your recent alerts and updates' :
+                     activeFeature === 'security-settings' ? 'Manage your account security' :
+                     'Get help with your account'}
                   </DialogDescription>
                 </DialogHeader>
 
                 <div className="py-2">
-                  {/* add funds  */}
                   {activeFeature === 'add-funds' && (
                     <div className="space-y-4">
                       <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
@@ -180,7 +213,6 @@ function AppContent() {
                     </div>
                   )}
 
-                  {/* withdraw */}
                   {activeFeature === 'withdraw' && (
                     <div className="space-y-4">
                       <div className="space-y-2">
@@ -203,26 +235,98 @@ function AppContent() {
                     </div>
                   )}
 
-                  {/* payment */}
                   {activeFeature === 'payment-methods' && (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between p-3 border border-[#008753] bg-[#008753]/5 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <CreditCard className="text-[#008753]" size={20} />
-                          <div>
-                            <p className="text-sm font-medium text-slate-900">Visa • 4242</p>
-                            <p className="text-xs text-slate-500">Expires 12/26</p>
-                          </div>
-                        </div>
-                        <Badge className="bg-[#008753]">Primary</Badge>
-                      </div>
-                      <Button variant="outline" className="w-full border-dashed">
-                        + Add New Payment Method
-                      </Button>
-                    </div>
+                    <>
+                        {paymentView === 'list' && (
+                            <div className="space-y-3">
+                                {paymentMethods.map((card) => (
+                                    <div key={card.id} className={`flex items-center justify-between p-3 border rounded-lg ${card.status === 'Primary' ? 'border-[#008753] bg-[#008753]/5' : 'border-slate-200'}`}>
+                                        <div className="flex items-center gap-3">
+                                            <CreditCard className={card.status === 'Primary' ? "text-[#008753]" : "text-slate-400"} size={20} />
+                                            <div>
+                                                <p className="text-sm font-medium text-slate-900">{card.type} • {card.last4}</p>
+                                                <p className="text-xs text-slate-500">Expires {card.expiry}</p>
+                                            </div>
+                                        </div>
+                                        <Badge className={card.status === 'Primary' ? "bg-[#008753]" : "bg-slate-200 text-slate-600 hover:bg-slate-300"}>
+                                            {card.status}
+                                        </Badge>
+                                    </div>
+                                ))}
+                                
+                                <Button 
+                                    variant="outline" 
+                                    className="w-full border-dashed"
+                                    onClick={() => setPaymentView('add')}
+                                >
+                                    + Add New Payment Method
+                                </Button>
+                            </div>
+                        )}
+
+                        {paymentView === 'add' && (
+                            <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
+                                <div className="space-y-2">
+                                    <Label>Card Number</Label>
+                                    <div className="relative">
+                                        <CreditCard className="absolute left-3 top-3 text-slate-400" size={18} />
+                                        <Input 
+                                            placeholder="0000 0000 0000 0000" 
+                                            className="pl-10" 
+                                            value={newCardForm.number}
+                                            onChange={(e) => setNewCardForm({...newCardForm, number: e.target.value})}
+                                            maxLength={19}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Expiry Date</Label>
+                                        <Input 
+                                            placeholder="MM/YY" 
+                                            value={newCardForm.expiry}
+                                            onChange={(e) => setNewCardForm({...newCardForm, expiry: e.target.value})}
+                                            maxLength={5}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>CVV</Label>
+                                        <Input 
+                                            type="password" 
+                                            placeholder="123" 
+                                            maxLength={3} 
+                                            value={newCardForm.cvv}
+                                            onChange={(e) => setNewCardForm({...newCardForm, cvv: e.target.value})}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Cardholder Name</Label>
+                                    <Input 
+                                        placeholder="e.g. Oluwaseun Adebayo" 
+                                        value={newCardForm.holder}
+                                        onChange={(e) => setNewCardForm({...newCardForm, holder: e.target.value})}
+                                    />
+                                </div>
+                                <div className="bg-slate-50 p-3 rounded-lg flex gap-2 items-start">
+                                    <ShieldCheck size={16} className="text-green-600 mt-0.5 shrink-0" />
+                                    <p className="text-xs text-slate-600">Your card details are secured with AES-256 encryption. We will charge a refundable ₦50 to verify this card.</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {paymentView === 'success' && (
+                            <div className="py-8 text-center animate-in zoom-in-95 duration-300">
+                                <div className="size-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <CheckCircle2 size={32} className="text-[#008753]" />
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-900">Card Added Successfully</h3>
+                                <p className="text-sm text-slate-500 mt-1">You can now use this card to fund your wallet.</p>
+                            </div>
+                        )}
+                    </>
                   )}
 
-                  {/* noti */}
                   {activeFeature === 'notifications' && (
                     <div className="space-y-2">
                       {[
@@ -246,7 +350,6 @@ function AppContent() {
                     </div>
                   )}
 
-                  {/* sec settings  */}
                   {activeFeature === 'security-settings' && (
                     <div className="space-y-2">
                       {securityView === 'main' ? (
@@ -297,23 +400,22 @@ function AppContent() {
                             <Label>New PIN</Label>
                             <Input type="password" placeholder="••••" className="text-center text-lg tracking-widest" maxLength={4} />
                           </div>
-                          <Button className="w-full bg-[#008753] hover:bg-[#006d42]" onClick={() => setSecurityView('main')}>Update PIN</Button>
+                          <Button className="w-full bg-[#008753] hover:bg-[#006d42] text-white" onClick={() => setSecurityView('main')}>Update PIN</Button>
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* help */}
                   {activeFeature === 'help-support' && (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       <div className="grid grid-cols-2 gap-3">
-                        <button className="p-4 border rounded-lg hover:border-[#008753] hover:bg-[#008753]/5 transition-colors text-center">
+                        <button className="p-4 border rounded-lg hover:bg-gray-50 text-center">
                           <div className="mx-auto mb-2 bg-green-50 w-10 h-10 rounded-full flex items-center justify-center">
                             <MessageCircle className="text-[#008753]" size={20} />
                           </div>
                           <p className="text-xs font-bold text-slate-900">Live Chat</p>
                         </button>
-                        <button className="p-4 border rounded-lg hover:border-[#008753] hover:bg-[#008753]/5 transition-colors text-center">
+                        <button className="p-4 border rounded-lg hover:bg-gray-50 text-center">
                           <div className="mx-auto mb-2 bg-blue-50 w-10 h-10 rounded-full flex items-center justify-center">
                             <Headphones className="text-blue-600" size={20} />
                           </div>
@@ -329,18 +431,33 @@ function AppContent() {
                 </div>
 
                 <DialogFooter>
-                  {(activeFeature === 'add-funds' || activeFeature === 'withdraw') && (
+                  {(activeFeature === 'add-funds' || activeFeature === 'withdraw' || (activeFeature === 'payment-methods' && paymentView === 'add')) && (
                     <div className="flex gap-2 w-full">
-                      <Button variant="outline" className="flex-1" onClick={handleFeatureClose}>Cancel</Button>
-                      {activeFeature === 'add-funds' ? (
-                        <Button className="flex-1 bg-[#008753] hover:bg-[#006d42]" onClick={handleFeatureClose}>Sent</Button>
+                      <Button 
+                        variant="outline" 
+                        className="flex-1" 
+                        onClick={() => {
+                            if (activeFeature === 'payment-methods') setPaymentView('list');
+                            else handleFeatureClose();
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      
+                      {activeFeature === 'payment-methods' ? (
+                        <Button className="flex-1 bg-[#008753] hover:bg-[#006d42] text-white" onClick={handleAddCard}>Save Card</Button>
+                      ) : activeFeature === 'add-funds' ? (
+                        <Button className="flex-1 bg-[#008753] hover:bg-[#006d42] text-white" onClick={handleFeatureClose}>Sent</Button>
                       ) : (
-                        <Button className="flex-1 bg-[#008753] hover:bg-[#006d42]" onClick={handleFeatureClose}>Confirm</Button>
+                        <Button className="flex-1 bg-[#008753] hover:bg-[#006d42] text-white" onClick={handleFeatureClose}>Confirm</Button>
                       )}
                     </div>
                   )}
-                  {['payment-methods', 'notifications', 'help-support'].includes(activeFeature) && (
+                  {['notifications', 'help-support'].includes(activeFeature) && (
                     <Button className="w-full" variant="outline" onClick={handleFeatureClose}>Close</Button>
+                  )}
+                  {activeFeature === 'payment-methods' && paymentView === 'list' && (
+                     <Button className="w-full" variant="outline" onClick={handleFeatureClose}>Close</Button>
                   )}
                 </DialogFooter>
               </DialogContent>
