@@ -1,31 +1,31 @@
 import { useState } from 'react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { ArrowRight, CheckCircle2, Fingerprint, Shield, Sparkles } from 'lucide-react';
+import { 
+  User, 
+  Mail, 
+  Lock, 
+  Gift, 
+  ChevronDown, 
+  ShieldCheck,
+  PieChart,
+  ArrowRight
+} from 'lucide-react';
 
 interface RegistrationPageProps {
   onComplete: () => void;
 }
 
-type BvnStatus = 'idle' | 'verifying' | 'verified';
-
 export function RegistrationPage({ onComplete }: RegistrationPageProps) {
-  const [bvn, setBvn] = useState('');
-  const [bvnStatus, setBvnStatus] = useState<BvnStatus>('idle');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const isVerifying = bvnStatus === 'verifying';
-  const isVerified = bvnStatus === 'verified';
-
-  const handleVerify = () => {
-    if (bvn.length !== 11 || isVerifying || isVerified) {
-      return;
-    }
-    setBvnStatus('verifying');
+  const handleSignUp = () => {
+    setIsLoading(true);
+    
     setTimeout(() => {
-      setBvnStatus('verified');
-    }, 1600);
+      setIsLoading(false);
+      onComplete(); 
+    }, 1500);
   };
 
   return (
@@ -57,8 +57,7 @@ export function RegistrationPage({ onComplete }: RegistrationPageProps) {
                 Register once, access every new Nigerian bond auction.
               </h1>
               <p className="registration-lead">
-                Create a BVN-verified account to invest, track coupons, and trade
-                sovereign notes with a clear compliance trail.
+                Create a BVN-verified account to invest, track coupons, and trade sovereign notes with a clear compliance trail.
               </p>
             </div>
 
@@ -73,35 +72,23 @@ export function RegistrationPage({ onComplete }: RegistrationPageProps) {
                 <p className="metric-value font-display">11 - 16%</p>
                 <p className="text-gray-500 text-xs">Recent auction range</p>
               </div>
-              <div className="metric-card">
-                <p className="text-gray-600 text-sm">Tax status</p>
-                <p className="metric-value font-display">Tax-free</p>
-                <p className="text-gray-500 text-xs">Federal coupon relief</p>
-              </div>
             </div>
 
             <div className="registration-panel">
-              <h3 className="font-display">What you unlock</h3>
+              <h3 className="font-display">Platform Benefits</h3>
               <div className="registration-list">
                 <div className="registration-list-item">
-                  <Shield size={20} className="text-[#008753]" />
+                  <ShieldCheck size={20} className="text-[#008753]" />
                   <div>
-                    <p className="text-gray-900 text-sm">BVN-aligned onboarding</p>
-                    <p className="text-gray-600 text-xs">Mock verification for this demo</p>
+                    <p className="text-gray-900 text-sm font-medium">Bank-grade security</p>
+                    <p className="text-gray-600 text-xs">AES-256 encryption</p>
                   </div>
                 </div>
                 <div className="registration-list-item">
-                  <Fingerprint size={20} className="text-[#008753]" />
+                  <PieChart size={20} className="text-[#008753]" />
                   <div>
-                    <p className="text-gray-900 text-sm">KYC-ready profiles</p>
-                    <p className="text-gray-600 text-xs">Store identity details once</p>
-                  </div>
-                </div>
-                <div className="registration-list-item">
-                  <Sparkles size={20} className="text-[#008753]" />
-                  <div>
-                    <p className="text-gray-900 text-sm">Smart allocation tools</p>
-                    <p className="text-gray-600 text-xs">Plan yield ladders faster</p>
+                    <p className="text-gray-900 text-sm font-medium">Instant Settlements</p>
+                    <p className="text-gray-600 text-xs">Trade on the secondary market with zero delays</p>
                   </div>
                 </div>
               </div>
@@ -109,87 +96,59 @@ export function RegistrationPage({ onComplete }: RegistrationPageProps) {
           </section>
 
           <section className="registration-form reveal reveal-delay-2">
-            <div className="registration-panel">
+            <div className="registration-panel !p-8">
               <div>
-                <h2 className="font-display">Create your account</h2>
-                <p className="text-gray-600 text-sm">
-                  Complete the details below, then verify your BVN.
+                <h2 className="font-display text-2xl">Create Account</h2>
+                <p className="text-gray-600 text-sm mt-1">
+                  Enter your login details to get started.
                 </p>
               </div>
 
-              <div className="form-grid two-col">
-                <div className="form-field">
-                  <Label htmlFor="firstName">First name</Label>
-                  <Input id="firstName" placeholder="Amina" />
+              <div className="space-y-6 mt-6">
+                <div className="flex items-center border-b border-gray-200 pb-2 focus-within:border-[#008753] transition-colors">
+                  <User className="text-[#008753] mr-3 size-5" />
+                  <input type="text" placeholder="Username" className="w-full outline-none bg-transparent text-gray-900 placeholder:text-gray-400" />
                 </div>
-                <div className="form-field">
-                  <Label htmlFor="lastName">Last name</Label>
-                  <Input id="lastName" placeholder="Okoye" />
+                <div className="flex items-center border-b border-gray-200 pb-2 focus-within:border-[#008753] transition-colors">
+                  <Mail className="text-[#008753] mr-3 size-5" />
+                  <input type="email" placeholder="Email Address" className="w-full outline-none bg-transparent text-gray-900 placeholder:text-gray-400" />
                 </div>
-                <div className="form-field">
-                  <Label htmlFor="email">Email address</Label>
-                  <Input id="email" type="email" placeholder="amina@email.com" />
-                </div>
-                <div className="form-field">
-                  <Label htmlFor="phone">Phone number</Label>
-                  <Input id="phone" placeholder="+234 801 000 0000" />
-                </div>
-              </div>
-
-              <div className="bvn-panel">
-                <div className="bvn-header">
-                  <div>
-                    <p className="text-gray-900 text-sm font-medium">BVN registration</p>
-                    <p className="text-gray-600 text-xs">
-                      Enter your 11-digit BVN to unlock trading.
-                    </p>
+                <div className="flex items-center border-b border-gray-200 pb-2 focus-within:border-[#008753] transition-colors">
+                  <div className="flex items-center gap-1 mr-3 border-r border-gray-200 pr-2">
+                    <span className="text-lg">🇳🇬</span>
+                    <ChevronDown size={14} className="text-gray-400" />
                   </div>
-                  <Badge className="bg-white text-[#008753] border border-[#008753]/20">
-                    Mock check
-                  </Badge>
+                  <input type="tel" placeholder="Phone Number" className="w-full outline-none bg-transparent text-gray-900 placeholder:text-gray-400" />
                 </div>
-                <div className="form-field">
-                  <Label htmlFor="bvn">BVN</Label>
-                  <Input
-                    id="bvn"
-                    placeholder="Enter 11-digit BVN"
-                    maxLength={11}
-                    value={bvn}
-                    onChange={(event) => setBvn(event.target.value.replace(/\D/g, ''))}
-                  />
+                <div className="flex items-center border-b border-gray-200 pb-2 focus-within:border-[#008753] transition-colors">
+                  <Lock className="text-[#008753] mr-3 size-5" />
+                  <input type="password" placeholder="Password" className="w-full outline-none bg-transparent text-gray-900 placeholder:text-gray-400" />
                 </div>
-                <div className="bvn-status">
-                  <Shield className="size-4 text-[#008753]" />
-                  <span>
-                    {isVerified
-                      ? 'Verified and ready for onboarding.'
-                      : isVerifying
-                      ? 'Verifying BVN...'
-                      : 'BVN is encrypted and checked after submission.'}
-                  </span>
+                <div className="flex items-center border-b border-gray-200 pb-2 focus-within:border-[#008753] transition-colors">
+                  <Lock className="text-[#008753] mr-3 size-5" />
+                  <input type="password" placeholder="Confirm Password" className="w-full outline-none bg-transparent text-gray-900 placeholder:text-gray-400" />
                 </div>
-                <Button
-                  className="w-full bg-[#008753] hover:bg-[#006d42]"
-                  onClick={handleVerify}
-                  disabled={bvn.length !== 11 || isVerifying || isVerified}
-                >
-                  {isVerified ? 'BVN Verified' : isVerifying ? 'Verifying...' : 'Verify BVN'}
-                  {!isVerifying && !isVerified && <ArrowRight className="ml-2 size-4" />}
-                  {isVerified && <CheckCircle2 className="ml-2 size-4" />}
-                </Button>
+                <div className="flex items-center border-b border-gray-200 pb-2 focus-within:border-[#008753] transition-colors">
+                  <Gift className="text-[#008753] mr-3 size-5" />
+                  <input type="text" placeholder="Referral code (Optional)" className="w-full outline-none bg-transparent text-gray-900 placeholder:text-gray-400" />
+                </div>
               </div>
 
-              <div className="form-actions">
-                <Button
-                  className="w-full bg-[#008753] hover:bg-[#006d42] shadow-lg"
-                  onClick={onComplete}
-                  disabled={!isVerified}
+              <div className="form-actions mt-8">
+                
+                <Button 
+                  className="w-full bg-[#008753] hover:bg-[#006d42] text-white h-12 rounded-lg font-medium shadow-md transition-all disabled:opacity-80 disabled:text-white" 
+                  onClick={handleSignUp} 
+                  disabled={isLoading}
                 >
-                  Continue to dashboard
-                  <ArrowRight className="ml-2 size-4" />
+                  {isLoading ? 'Processing...' : 'Sign up'}
+                  {!isLoading && <ArrowRight className="ml-2 size-4 text-white" />}
                 </Button>
-                <p className="text-gray-500 text-xs">
-                  BVN verification is mocked in this demo environment.
+                <p className="text-center text-[10px] text-gray-500 mt-3 px-4 leading-relaxed">
+                  By clicking Sign Up you agree to Bond Token's <span className="text-[#008753] cursor-pointer">Terms & Conditions</span>
+                </p>
+                <p className="text-center text-sm text-gray-600 mt-2">
+                  Got an account? <span className="text-[#008753] font-medium cursor-pointer">Sign in</span>
                 </p>
               </div>
             </div>
