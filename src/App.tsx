@@ -27,7 +27,8 @@ import {
   Key,
   ArrowLeft,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Calendar
 } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
@@ -39,6 +40,12 @@ function AppContent() {
   const [activeFeature, setActiveFeature] = useState<string | null>(null);
   const [isRegistered, setIsRegistered] = useState(false);
   
+ 
+  const [profileModalState, setProfileModalState] = useState<'closed' | 'form' | 'success'>('closed');
+  const [bvn, setBvn] = useState('');
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
+  
+  
   const [securityView, setSecurityView] = useState<'main' | 'change-pin'>('main');
   const [paymentView, setPaymentView] = useState<'list' | 'add' | 'success'>('list');
   const [withdrawView, setWithdrawView] = useState<'form' | 'success'>('form');
@@ -47,7 +54,6 @@ function AppContent() {
   const [paymentMethods, setPaymentMethods] = useState([
     { id: 1, type: 'Visa', last4: '4242', expiry: '12/26', holder: 'Oluwaseun Adebayo', status: 'Primary' }
   ]);
-
   const [newCardForm, setNewCardForm] = useState({ number: '', expiry: '', cvv: '', holder: '' });
   const [withdrawAmount, setWithdrawAmount] = useState('');
 
@@ -65,33 +71,34 @@ function AppContent() {
   
   const handleFeatureClose = () => setActiveFeature(null);
 
+  
   const handleAddCard = () => {
     setPaymentView('success');
     const last4 = newCardForm.number.length > 4 ? newCardForm.number.slice(-4) : '8899';
-    const newCard = {
-        id: Date.now(),
-        type: 'Mastercard',
-        last4: last4,
-        expiry: newCardForm.expiry || '10/28',
-        holder: newCardForm.holder || 'Oluwaseun Adebayo',
-        status: 'Active'
-    };
+    const newCard = { id: Date.now(), type: 'Mastercard', last4: last4, expiry: newCardForm.expiry || '10/28', holder: newCardForm.holder || 'Oluwaseun Adebayo', status: 'Active' };
     setTimeout(() => {
         setPaymentMethods([...paymentMethods, newCard]);
         setPaymentView('list'); 
     }, 1500);
   };
 
-  const handleWithdraw = () => {
-    setWithdrawView('success');
+  const handleWithdraw = () => setWithdrawView('success');
+  const handleConfirmDeposit = () => setAddFundsView('success');
+
+  
+  const submitProfileCompletion = () => {
+    setIsProfileLoading(true);
+    setTimeout(() => {
+      setIsProfileLoading(false);
+      setProfileModalState('success');
+    }, 1500);
   };
 
-  const handleConfirmDeposit = () => {
-    setAddFundsView('success');
-  };
-
-  if (!isRegistered) {
-    return <RegistrationPage onComplete={() => setIsRegistered(true)} />;
+  
+    return <RegistrationPage onComplete={() => {
+      setIsRegistered(true);
+      setProfileModalState('form');
+    }} />;
   }
 
   const navItems = [
@@ -182,6 +189,7 @@ function AppContent() {
             {activeFeature === 'tax-center' && <TaxCenter onClose={handleFeatureClose} />}
             {activeFeature === 'education-center' && <EducationCenter onClose={handleFeatureClose} />}
 
+            
             <Dialog 
               open={!!activeFeature && ['add-funds', 'withdraw', 'payment-methods', 'notifications', 'security-settings', 'help-support'].includes(activeFeature)} 
               onOpenChange={(open) => !open && handleFeatureClose()}
@@ -200,7 +208,6 @@ function AppContent() {
                         <ArrowLeft size={18} className="text-gray-500" />
                       </button>
                     )}
-                    
                     {activeFeature === 'payment-methods' && paymentView === 'add' ? 'Add New Card' : 
                      securityView === 'change-pin' ? 'Change PIN' : 
                      activeFeature === 'withdraw' && withdrawView === 'success' ? 'Processing Withdrawal' :
@@ -208,343 +215,107 @@ function AppContent() {
                      activeFeature?.replace('-', ' ')}
                   </DialogTitle>
                   <DialogDescription>
-                    {activeFeature === 'payment-methods' && paymentView === 'add' ? 'Enter your card details securely' :
-                     activeFeature === 'add-funds' ? 'Transfer funds to your virtual wallet' :
-                     activeFeature === 'withdraw' ? 'Withdraw funds to your bank account' :
-                     activeFeature === 'payment-methods' ? 'Manage your linked cards and accounts' :
-                     activeFeature === 'notifications' ? 'Your recent alerts and updates' :
-                     activeFeature === 'security-settings' ? 'Manage your account security' :
-                     'Get help with your account'}
+                     Action required for your account.
                   </DialogDescription>
                 </DialogHeader>
 
                 <div className="py-4">
-                  {activeFeature === 'add-funds' && (
-                    <>
-                      {addFundsView === 'details' ? (
-                        <div className="space-y-4">
-                          <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                            <p className="text-xs text-slate-500 font-bold mb-2 uppercase tracking-wide">Virtual Account Details</p>
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-2xl font-mono text-slate-900 tracking-wider">9023485122</span>
-                              <Copy size={18} className="text-[#008753] cursor-pointer hover:opacity-80 transition-opacity" />
-                            </div>
-                            <p className="text-sm text-slate-600 font-medium">Wema Bank • BTN-Olayimika</p>
-                          </div>
-                          <div className="flex gap-3 text-xs text-blue-700 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                            <AlertCircle size={18} className="shrink-0" />
-                            <p className="leading-relaxed">Transfers are processed instantly. Please ensure you transfer from an account bearing your registered name.</p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="py-8 text-center animate-in zoom-in-95 duration-300">
-                          <div className="size-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <CheckCircle2 size={32} className="text-[#008753]" />
-                          </div>
-                          <h3 className="text-lg font-bold text-slate-900">Deposit Confirmed</h3>
-                          <p className="text-sm text-slate-500 mt-2">
-                            Your transfer has been received. Your wallet balance has been updated.
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {activeFeature === 'withdraw' && (
-                    <>
-                      {withdrawView === 'form' ? (
-                        <div className="space-y-6">
-                          <div className="space-y-2">
-                            <Label htmlFor="amount" className="text-sm font-semibold">Amount to Withdraw</Label>
-                            <div className="relative">
-                              <span className="absolute left-4 top-3 text-slate-500 font-medium">₦</span>
-                              <Input 
-                                id="amount"
-                                type="number" 
-                                placeholder="0.00" 
-                                className="pl-9 h-12 text-lg font-medium"
-                                value={withdrawAmount}
-                                onChange={(e) => setWithdrawAmount(e.target.value)}
-                              />
-                            </div>
-                            <p className="text-xs text-slate-500 text-right font-medium">Available: ₦125,000.00</p>
-                          </div>
-                          <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 flex items-center gap-4">
-                            <div className="size-10 bg-white border border-slate-200 rounded-full flex items-center justify-center shrink-0">
-                              <Landmark className="text-blue-600" size={18} />
-                            </div>
-                            <div>
-                              <p className="text-sm font-bold text-slate-900">Stanbic IBTC Bank</p>
-                              <p className="text-xs text-slate-500 mt-0.5">Oluwaseun Adebayo • ****8902</p>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="py-8 text-center animate-in zoom-in-95 duration-300">
-                          <div className="size-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <CheckCircle2 size={32} className="text-[#008753]" />
-                          </div>
-                          <h3 className="text-lg font-bold text-slate-900">Withdrawal Initiated</h3>
-                          <p className="text-sm text-slate-500 mt-2">
-                            You are withdrawing <span className="font-bold text-slate-900">₦{Number(withdrawAmount).toLocaleString()}</span> to your Stanbic IBTC account.
-                          </p>
-                          <p className="text-xs text-slate-400 mt-4">Funds usually arrive within 15 minutes.</p>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {activeFeature === 'payment-methods' && (
-                    <>
-                        {paymentView === 'list' && (
-                            <div className="space-y-3">
-                                {paymentMethods.map((card) => (
-                                    <div key={card.id} className={`flex items-center justify-between p-4 border rounded-lg ${card.status === 'Primary' ? 'border-[#008753] bg-[#008753]/5' : 'border-slate-200'}`}>
-                                        <div className="flex items-center gap-4">
-                                            <div className="bg-white p-2 rounded-md shadow-sm border border-slate-100">
-                                              <CreditCard className={card.status === 'Primary' ? "text-[#008753]" : "text-slate-400"} size={20} />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-slate-900">{card.type} • {card.last4}</p>
-                                                <p className="text-xs text-slate-500 mt-0.5">Expires {card.expiry}</p>
-                                            </div>
-                                        </div>
-                                        <Badge className={card.status === 'Primary' ? "bg-[#008753] text-white" : "bg-slate-100 text-slate-600"}>
-                                            {card.status}
-                                        </Badge>
-                                    </div>
-                                ))}
-                                
-                                <Button 
-                                    variant="outline" 
-                                    className="w-full border-dashed h-12 text-slate-600 hover:text-[#008753] hover:border-[#008753] hover:bg-green-50 transition-colors"
-                                    onClick={() => setPaymentView('add')}
-                                >
-                                    + Add New Payment Method
-                                </Button>
-                            </div>
-                        )}
-
-                        {paymentView === 'add' && (
-                            <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
-                                <div className="space-y-2">
-                                    <Label className="text-xs font-semibold uppercase text-slate-500">Card Number</Label>
-                                    <div className="relative">
-                                        <CreditCard className="absolute left-3 top-3.5 text-slate-400" size={18} />
-                                        <Input 
-                                            placeholder="0000 0000 0000 0000" 
-                                            className="pl-10 h-11 text-base" 
-                                            value={newCardForm.number}
-                                            onChange={(e) => setNewCardForm({...newCardForm, number: e.target.value})}
-                                            maxLength={19}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label className="text-xs font-semibold uppercase text-slate-500">Expiry Date</Label>
-                                        <Input 
-                                            placeholder="MM/YY" 
-                                            className="h-11 text-base"
-                                            value={newCardForm.expiry}
-                                            onChange={(e) => setNewCardForm({...newCardForm, expiry: e.target.value})}
-                                            maxLength={5}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-xs font-semibold uppercase text-slate-500">CVV</Label>
-                                        <Input 
-                                            type="password" 
-                                            placeholder="123" 
-                                            className="h-11 text-base tracking-widest"
-                                            maxLength={3} 
-                                            value={newCardForm.cvv}
-                                            onChange={(e) => setNewCardForm({...newCardForm, cvv: e.target.value})}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-xs font-semibold uppercase text-slate-500">Cardholder Name</Label>
-                                    <Input 
-                                        placeholder="e.g. Oluwaseun Adebayo" 
-                                        className="h-11 text-base"
-                                        value={newCardForm.holder}
-                                        onChange={(e) => setNewCardForm({...newCardForm, holder: e.target.value})}
-                                    />
-                                </div>
-                                <div className="bg-slate-50 p-4 rounded-lg flex gap-3 items-start border border-slate-100 mt-2">
-                                    <ShieldCheck size={18} className="text-green-600 shrink-0" />
-                                    <p className="text-xs text-slate-600 leading-relaxed">Your card details are secured with AES-256 encryption. We will charge a refundable ₦50 to verify this card.</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {paymentView === 'success' && (
-                            <div className="py-8 text-center animate-in zoom-in-95 duration-300">
-                                <div className="size-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <CheckCircle2 size={32} className="text-[#008753]" />
-                                </div>
-                                <h3 className="text-lg font-bold text-slate-900">Card Added Successfully</h3>
-                                <p className="text-sm text-slate-500 mt-1">You can now use this card to fund your wallet.</p>
-                            </div>
-                        )}
-                    </>
-                  )}
-
-                  {activeFeature === 'notifications' && (
-                    <div className="space-y-3">
-                      {[
-                        { t: 'Coupon Received', d: '₦24,500 interest paid', h: '2h ago' },
-                        { t: 'Price Alert', d: 'FGN 2027 is up 0.4%', h: '5h ago' },
-                        { t: 'Security Alert', d: 'New login detected', h: '1d ago' }
-                      ].map((n, i) => (
-                        <div key={i} className="flex gap-4 p-4 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-100 cursor-pointer">
-                          <div className="size-10 bg-slate-100 rounded-full flex items-center justify-center shrink-0">
-                            <BellRing size={18} className="text-[#008753]" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex justify-between items-start mb-1">
-                              <p className="text-sm font-bold text-slate-900">{n.t}</p>
-                              <span className="text-[10px] font-semibold text-slate-400 uppercase">{n.h}</span>
-                            </div>
-                            <p className="text-xs text-slate-600">{n.d}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {activeFeature === 'security-settings' && (
-                    <div className="space-y-3">
-                      {securityView === 'main' ? (
-                        <>
-                          <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
-                            <div className="flex items-center gap-4">
-                              <div className="bg-slate-100 p-2 rounded-lg">
-                                <Smartphone size={20} className="text-slate-600" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold text-slate-900">Biometric Login</p>
-                                <p className="text-xs text-slate-500 mt-0.5">Face ID / Fingerprint</p>
-                              </div>
-                            </div>
-                            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0">Enabled</Badge>
-                          </div>
-                          
-                          <button 
-                            onClick={() => setSecurityView('change-pin')}
-                            className="w-full flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:border-[#008753] hover:bg-[#008753]/5 transition-all text-left group"
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className="bg-slate-100 p-2 rounded-lg group-hover:bg-white transition-colors">
-                                <ShieldCheck size={20} className="text-slate-600 group-hover:text-[#008753]" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold text-slate-900">Transaction PIN</p>
-                                <p className="text-xs text-slate-500 mt-0.5">Change 4-digit PIN</p>
-                              </div>
-                            </div>
-                            <ChevronRight size={18} className="text-slate-400 group-hover:text-[#008753]" />
-                          </button>
-
-                          <button className="w-full flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:border-[#008753] hover:bg-[#008753]/5 transition-all text-left group">
-                            <div className="flex items-center gap-4">
-                              <div className="bg-slate-100 p-2 rounded-lg group-hover:bg-white transition-colors">
-                                <Key size={20} className="text-slate-600 group-hover:text-[#008753]" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold text-slate-900">Password</p>
-                                <p className="text-xs text-slate-500 mt-0.5">Last updated 3mo ago</p>
-                              </div>
-                            </div>
-                            <ChevronRight size={18} className="text-slate-400 group-hover:text-[#008753]" />
-                          </button>
-                        </>
-                      ) : (
-                        <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
-                          <div className="space-y-2">
-                            <Label className="text-xs font-semibold text-slate-500 uppercase">Current PIN</Label>
-                            <Input type="password" placeholder="••••" className="text-center text-2xl tracking-[1em] h-14" maxLength={4} />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs font-semibold text-slate-500 uppercase">New PIN</Label>
-                            <Input type="password" placeholder="••••" className="text-center text-2xl tracking-[1em] h-14" maxLength={4} />
-                          </div>
-                          <Button className="w-full bg-[#008753] hover:bg-[#006d42] text-white h-12 mt-2" onClick={() => setSecurityView('main')}>
-                            Update PIN
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {activeFeature === 'help-support' && (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <button className="p-5 border border-slate-200 rounded-lg hover:border-[#008753] hover:bg-[#008753]/5 transition-all text-center group">
-                          <div className="size-12 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-white transition-colors">
-                            <MessageCircle className="text-[#008753]" size={22} />
-                          </div>
-                          <p className="text-sm font-bold text-slate-900">Live Chat</p>
-                        </button>
-                        <button className="p-5 border border-slate-200 rounded-lg hover:border-[#008753] hover:bg-[#008753]/5 transition-all text-center group">
-                          <div className="size-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-white transition-colors">
-                            <Headphones className="text-blue-600" size={22} />
-                          </div>
-                          <p className="text-sm font-bold text-slate-900">Call Support</p>
-                        </button>
-                      </div>
-                      <div className="p-4 bg-slate-900 rounded-lg text-white flex items-center justify-between">
-                        <div>
-                          <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Support ID</p>
-                          <p className="font-mono text-base font-bold">BTN-8821-XP</p>
-                        </div>
-                        <Copy size={18} className="text-slate-400 cursor-pointer hover:text-white transition-colors" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <DialogFooter className="mt-6">
-                  {(activeFeature === 'add-funds' && addFundsView === 'details') || 
-                   (activeFeature === 'withdraw' && withdrawView === 'form') || 
-                   (activeFeature === 'payment-methods' && paymentView === 'add') ? (
-                    <div className="flex gap-3 w-full">
-                      <Button 
-                        variant="outline" 
-                        className="flex-1 h-11" 
-                        onClick={() => {
-                            if (activeFeature === 'payment-methods') setPaymentView('list');
-                            else handleFeatureClose();
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      
-                      {activeFeature === 'payment-methods' ? (
-                        <Button className="flex-1 bg-[#008753] hover:bg-[#006d42] text-white h-11" onClick={handleAddCard}>Save Card</Button>
-                      ) : activeFeature === 'add-funds' ? (
-                        <Button className="flex-1 bg-[#008753] hover:bg-[#006d42] text-white h-11" onClick={handleConfirmDeposit}>Confirm Deposit</Button>
-                      ) : (
-                        <Button className="flex-1 bg-[#008753] hover:bg-[#006d42] text-white h-11" onClick={handleWithdraw}>Confirm Withdrawal</Button>
-                      )}
-                    </div>
-                  ) : null}
                   
-                  {(['notifications', 'help-support'].includes(activeFeature) || 
-                    (activeFeature === 'payment-methods' && paymentView === 'list') ||
-                    (activeFeature === 'payment-methods' && paymentView === 'success') ||
-                    (activeFeature === 'withdraw' && withdrawView === 'success') ||
-                    (activeFeature === 'add-funds' && addFundsView === 'success')) && (
-                    <Button className="w-full h-11" variant="outline" onClick={handleFeatureClose}>Close</Button>
+                  {activeFeature === 'add-funds' && (
+                    <div className="text-center py-6">
+                       <CheckCircle2 className="mx-auto text-green-600 mb-2" size={40}/>
+                       <p>Funds component</p>
+                    </div>
                   )}
+                  
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={handleFeatureClose}>Close</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+
+            
+            <Dialog 
+              open={profileModalState !== 'closed'} 
+              onOpenChange={(open) => !open && setProfileModalState('closed')}
+            >
+              <DialogContent className={profileModalState === 'form' ? "max-w-2xl mx-4" : "max-w-md mx-4"}>
+                {profileModalState === 'form' ? (
+                  <>
+                    <DialogHeader>
+                      <DialogTitle className="text-2xl font-bold text-gray-900">Complete Profile</DialogTitle>
+                      <DialogDescription>Please provide your legal details as they appear on your BVN to unlock trading.</DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold uppercase text-gray-500">First Name</Label>
+                        <Input placeholder="John" className="h-11" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold uppercase text-gray-500">Middle Name</Label>
+                        <Input placeholder="Optional" className="h-11" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold uppercase text-gray-500">Last Name</Label>
+                        <Input placeholder="Doe" className="h-11" />
+                      </div>
+                      <div className="space-y-1.5 relative">
+                        <Label className="text-xs font-semibold uppercase text-gray-500">Date of Birth</Label>
+                        <Input placeholder="MM/DD/YYYY" className="h-11 pr-10" />
+                        <Calendar className="absolute right-3 top-[30px] size-4 text-gray-400" />
+                      </div>
+                      <div className="space-y-1.5 relative">
+                        <Label className="text-xs font-semibold uppercase text-gray-500">BVN</Label>
+                        <Input 
+                          placeholder="11-digit number" 
+                          maxLength={11} 
+                          className="h-11"
+                          value={bvn} 
+                          onChange={(e) => setBvn(e.target.value.replace(/\D/g, ''))}
+                        />
+                        {bvn.length === 11 && <CheckCircle2 className="absolute right-3 top-[30px] size-4 text-[#008753]" />}
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold uppercase text-gray-500">CHN Number</Label>
+                        <Input placeholder="Optional" className="h-11" />
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 p-3 rounded-lg flex gap-3 mt-2 border border-blue-100">
+                      <ShieldCheck className="text-blue-600 shrink-0 mt-0.5" size={18} />
+                      <p className="text-xs text-blue-800 font-medium">We use your BVN securely to comply with CBN KYC guidelines. Data is heavily encrypted.</p>
+                    </div>
+
+                    <DialogFooter className="mt-4">
+                      <Button 
+                        className="w-full sm:w-auto bg-[#008753] hover:bg-[#006d42] text-white px-8 disabled:opacity-70 disabled:text-white"
+                        onClick={submitProfileCompletion}
+                        disabled={isProfileLoading || bvn.length !== 11}
+                      >
+                        {isProfileLoading ? 'Verifying...' : 'Submit Details'}
+                      </Button>
+                    </DialogFooter>
+                  </>
+                ) : (
+                  <div className="py-8 text-center animate-in zoom-in-95 duration-300">
+                    <div className="size-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle2 size={32} className="text-[#008753]" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 font-display mb-2">You're All Set!</h3>
+                    <p className="text-gray-500 text-sm mb-6">Your identity is verified. You can now fund your wallet and purchase bonds.</p>
+                    <Button className="w-full bg-[#008753] hover:bg-[#006d42] text-white h-12" onClick={() => setProfileModalState('closed')}>
+                      Start Investing
+                    </Button>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+
           </main>
         </div>
       </div>
-
       <nav className="app-bottom-nav md:hidden">
         <div className="app-bottom-nav-inner">
           {navItems.map((item) => (
